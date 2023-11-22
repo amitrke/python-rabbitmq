@@ -21,7 +21,13 @@ secrets_manager = boto3.client('secretsmanager')
 response = secrets_manager.get_secret_value(SecretId='your_secret_id')
 
 # Extract the password from the response
-rmqPass = response['SecretString']
+secretString = response['SecretString']
+
+# Convert the secret string to a dictionary
+secretDict = eval(secretString)
+
+# Extract the password from the dictionary
+rmqPass = secretDict['rmqPass']
 
 # Use the rmqPass variable in your code
 
@@ -45,7 +51,17 @@ consumer = channel.basic_consume(
 )
 
 # Start consuming messages
-channel.start_consuming()
+while True:
+    try:
+        channel.start_consuming()
+    except RuntimeError as e:
+        print("Connection was closed, reconnecting...")
+        print("Waiting 10 seconds...")
+        time.sleep(10)
+        print("Reconnecting...")
+        print("Error was: {}".format(e)
+        continue
+
 
 def on_message(ch, method, properties, body):
     # Do something with the message
